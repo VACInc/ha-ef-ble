@@ -488,6 +488,9 @@
       "port_power": {
         "name": "{name} Power"
       },
+      "port_enabled": {
+        "name": "{name} Enabled"
+      },
       "port_energy_today": {
         "name": "{name} Energy Today"
       },

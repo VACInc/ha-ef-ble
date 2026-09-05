@@ -21,6 +21,7 @@ class Device(DeviceBase, ProtobufProps):
     SN_PREFIX = (b"P521",)
     NAME_PREFIX = "EF-DC-320-"
     AUTH_USER_ID = "homeassistant"
+    AUTH_TOKEN_LOWERCASE = True
 
     battery_level = pb_field(pb.cms_batt_soc)
     state_of_health = pb_field(pb.cms_batt_soh)

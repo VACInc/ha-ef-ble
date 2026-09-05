@@ -56,6 +56,7 @@ class DeviceBase(abc.ABC):
     MANUFACTURER_KEY = 0xB5B5
 
     NAME_PREFIX: str
+    AUTH_TOKEN_LOWERCASE = False
     SN_PREFIX: tuple[bytes, ...] | bytes
 
     _listeners = _Listeners.create()
@@ -327,6 +328,7 @@ class DeviceBase(abc.ABC):
                     packet_version=self.packet_version,
                     encrypt_type=self.scan_record.encrypt_type,
                     auth_header_dst=self.auth_header_dst,
+                    auth_token_lowercase=self.AUTH_TOKEN_LOWERCASE,
                 )
                 .with_logging_options(self._logger.options)
                 .with_disabled_reconnect(self._reconnect_disabled)

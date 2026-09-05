@@ -30,8 +30,6 @@ class Device(DeviceBase, ProtobufProps):
     output_power = pb_field(pb.pow_out_sum_w, pround(2))
     remaining_time_charging = pb_field(pb.cms_chg_rem_time)
     remaining_time_discharging = pb_field(pb.cms_dsg_rem_time)
-    battery_charge_limit_min = pb_field(pb.cms_min_dsg_soc)
-    battery_charge_limit_max = pb_field(pb.cms_max_chg_soc)
 
     error_code = pb_field(pb.errcode)
     _device_error_info = pb_field(pb.dev_errcode_list)

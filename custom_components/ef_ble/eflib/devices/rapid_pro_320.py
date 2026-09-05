@@ -2,6 +2,7 @@ from bleak.backends.device import BLEDevice
 from bleak.backends.scanner import AdvertisementData
 
 from ..devicebase import DeviceBase
+from ..entity import controls
 from ..packet import Packet
 from ..pb import dev_apl_comm_pb2
 from ..props import ProtobufProps, computed_field, pb_field, proto_attr_mapper
@@ -64,6 +65,69 @@ class Device(DeviceBase, ProtobufProps):
     pogo_power = pb_field(pb.pogopin_1_display_info.usb_pow, pround(2))
     pogo_voltage = pb_field(pb.pogopin_1_display_info.usb_vol, pround(2))
     pogo_current = pb_field(pb.pogopin_1_display_info.usb_amp, pround(2))
+
+    async def _set_port_enabled(self, field: str, enabled: bool) -> None:
+        config = dev_apl_comm_pb2.ConfigWrite()
+        setattr(config, field, 1 if enabled else 2)
+        packet = Packet(
+            0x20,
+            0x02,
+            0xFE,
+            0x11,
+            config.SerializeToString(),
+            0x01,
+            0x01,
+            0x13,
+        )
+        await self.send_packet(packet, raise_on_failure=True)
+
+    @controls.switch(
+        usb_c1_port_enabled,
+        translation_key="port_control",
+        translation_placeholders={"name": "USB-C 1"},
+    )
+    async def enable_usb_c1_port_enabled(self, enabled: bool) -> None:
+        await self._set_port_enabled("cfg_typec1_port_enable", enabled)
+
+    @controls.switch(
+        usb_c2_port_enabled,
+        translation_key="port_control",
+        translation_placeholders={"name": "USB-C 2"},
+    )
+    async def enable_usb_c2_port_enabled(self, enabled: bool) -> None:
+        await self._set_port_enabled("cfg_typec2_port_enable", enabled)
+
+    @controls.switch(
+        usb_c3_port_enabled,
+        translation_key="port_control",
+        translation_placeholders={"name": "USB-C 3"},
+    )
+    async def enable_usb_c3_port_enabled(self, enabled: bool) -> None:
+        await self._set_port_enabled("cfg_typec3_port_enable", enabled)
+
+    @controls.switch(
+        usb_c4_port_enabled,
+        translation_key="port_control",
+        translation_placeholders={"name": "USB-C 4"},
+    )
+    async def enable_usb_c4_port_enabled(self, enabled: bool) -> None:
+        await self._set_port_enabled("cfg_typec4_port_enable", enabled)
+
+    @controls.switch(
+        usb_a1_port_enabled,
+        translation_key="port_control",
+        translation_placeholders={"name": "USB-A 1"},
+    )
+    async def enable_usb_a1_port_enabled(self, enabled: bool) -> None:
+        await self._set_port_enabled("cfg_usb1_port_enable", enabled)
+
+    @controls.switch(
+        pogo_port_enabled,
+        translation_key="port_control",
+        translation_placeholders={"name": "Pogo"},
+    )
+    async def enable_pogo_port_enabled(self, enabled: bool) -> None:
+        await self._set_port_enabled("cfg_pogopin_port_enable", enabled)
 
     def __init__(
         self, ble_dev: BLEDevice, adv_data: AdvertisementData, sn: str

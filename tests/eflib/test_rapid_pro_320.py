@@ -2,7 +2,9 @@ import pytest
 from pytest_mock import MockerFixture
 
 from custom_components.ef_ble.eflib.devices.rapid_pro_320 import Device
+from custom_components.ef_ble.eflib.entity import controls
 from custom_components.ef_ble.eflib.packet import Packet
+from custom_components.ef_ble.eflib.pb import dev_apl_comm_pb2
 
 
 @pytest.fixture
@@ -29,7 +31,9 @@ def device(mocker: MockerFixture):
     ble_dev.address = "B4:3A:45:9E:3B:72"
     adv_data = mocker.MagicMock()
     adv_data.manufacturer_data = {0xB5B5: b"\x00P521ZA1B3J3P0079"}
-    return Device(ble_dev, adv_data, "P521ZA1B3J3P0079")
+    device = Device(ble_dev, adv_data, "P521ZA1B3J3P0079")
+    device._conn = mocker.AsyncMock()
+    return device
 
 
 def test_rapid_pro_320_matches_serial_prefix():
@@ -75,3 +79,43 @@ async def test_rapid_pro_320_decodes_all_six_ports(device, display_packet):
 
     assert device.usb_c4_voltage == -5.2
     assert device.usb_a1_voltage == -5.2
+
+
+def test_rapid_pro_320_registers_all_six_port_controls(device):
+    switches = device.get_controls(controls.switch)
+
+    assert {switch.key for switch in switches} == {
+        "usb_c1_port_enabled",
+        "usb_c2_port_enabled",
+        "usb_c3_port_enabled",
+        "usb_c4_port_enabled",
+        "usb_a1_port_enabled",
+        "pogo_port_enabled",
+    }
+
+
+@pytest.mark.parametrize(
+    ("method_name", "config_field"),
+    [
+        ("enable_usb_c1_port_enabled", "cfg_typec1_port_enable"),
+        ("enable_usb_c2_port_enabled", "cfg_typec2_port_enable"),
+        ("enable_usb_c3_port_enabled", "cfg_typec3_port_enable"),
+        ("enable_usb_c4_port_enabled", "cfg_typec4_port_enable"),
+        ("enable_usb_a1_port_enabled", "cfg_usb1_port_enable"),
+        ("enable_pogo_port_enabled", "cfg_pogopin_port_enable"),
+    ],
+)
+@pytest.mark.parametrize(("enabled", "wire_value"), [(True, 1), (False, 2)])
+async def test_rapid_pro_320_port_control_packets(
+    device, method_name, config_field, enabled, wire_value
+):
+    await getattr(device, method_name)(enabled)
+
+    device._conn.send_packet.assert_awaited_once()
+    packet = device._conn.send_packet.await_args.args[0]
+    assert (packet.src, packet.dst) == (0x20, 0x02)
+    assert (packet.cmd_set, packet.cmd_id) == (0xFE, 0x11)
+
+    config = dev_apl_comm_pb2.ConfigWrite()
+    config.ParseFromString(packet.payload)
+    assert getattr(config, config_field) == wire_value

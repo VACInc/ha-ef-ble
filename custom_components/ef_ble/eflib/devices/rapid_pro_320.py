@@ -6,9 +6,15 @@ from ..entity import controls
 from ..packet import Packet
 from ..pb import dev_apl_comm_pb2
 from ..props import ProtobufProps, computed_field, pb_field, proto_attr_mapper
-from ..props.transforms import pround
 
 pb = proto_attr_mapper(dev_apl_comm_pb2.DisplayPropertyUpload)
+
+
+def _magnitude(value: float | None) -> float | None:
+    """Expose charger telemetry as a positive magnitude."""
+    # Firmware uses a negative sign to encode output direction. Entity names
+    # already identify direction, so keeping the sign is physically misleading.
+    return None if value is None else round(abs(value), 2)
 
 
 def _port_enabled(value: int) -> bool:
@@ -27,8 +33,8 @@ class Device(DeviceBase, ProtobufProps):
     battery_level = pb_field(pb.cms_batt_soc)
     state_of_health = pb_field(pb.cms_batt_soh)
     cell_temperature = pb_field(pb.cms_batt_temp)
-    input_power = pb_field(pb.pow_in_sum_w, pround(2))
-    output_power = pb_field(pb.pow_out_sum_w, pround(2))
+    input_power = pb_field(pb.pow_in_sum_w, _magnitude)
+    output_power = pb_field(pb.pow_out_sum_w, _magnitude)
     remaining_time_charging = pb_field(pb.cms_chg_rem_time)
     remaining_time_discharging = pb_field(pb.cms_dsg_rem_time)
 
@@ -42,29 +48,29 @@ class Device(DeviceBase, ProtobufProps):
     usb_a1_port_enabled = pb_field(pb.usb1_port_enable, _port_enabled)
     pogo_port_enabled = pb_field(pb.pogopin_port_enable, _port_enabled)
 
-    usb_c1_power = pb_field(pb.usb_typec1_display_info.usb_pow, pround(2))
-    usb_c1_voltage = pb_field(pb.usb_typec1_display_info.usb_vol, pround(2))
-    usb_c1_current = pb_field(pb.usb_typec1_display_info.usb_amp, pround(2))
+    usb_c1_power = pb_field(pb.usb_typec1_display_info.usb_pow, _magnitude)
+    usb_c1_voltage = pb_field(pb.usb_typec1_display_info.usb_vol, _magnitude)
+    usb_c1_current = pb_field(pb.usb_typec1_display_info.usb_amp, _magnitude)
 
-    usb_c2_power = pb_field(pb.usb_typec2_display_info.usb_pow, pround(2))
-    usb_c2_voltage = pb_field(pb.usb_typec2_display_info.usb_vol, pround(2))
-    usb_c2_current = pb_field(pb.usb_typec2_display_info.usb_amp, pround(2))
+    usb_c2_power = pb_field(pb.usb_typec2_display_info.usb_pow, _magnitude)
+    usb_c2_voltage = pb_field(pb.usb_typec2_display_info.usb_vol, _magnitude)
+    usb_c2_current = pb_field(pb.usb_typec2_display_info.usb_amp, _magnitude)
 
-    usb_c3_power = pb_field(pb.usb_typec3_display_info.usb_pow, pround(2))
-    usb_c3_voltage = pb_field(pb.usb_typec3_display_info.usb_vol, pround(2))
-    usb_c3_current = pb_field(pb.usb_typec3_display_info.usb_amp, pround(2))
+    usb_c3_power = pb_field(pb.usb_typec3_display_info.usb_pow, _magnitude)
+    usb_c3_voltage = pb_field(pb.usb_typec3_display_info.usb_vol, _magnitude)
+    usb_c3_current = pb_field(pb.usb_typec3_display_info.usb_amp, _magnitude)
 
-    usb_c4_power = pb_field(pb.usb_typec4_display_info.usb_pow, pround(2))
-    usb_c4_voltage = pb_field(pb.usb_typec4_display_info.usb_vol, pround(2))
-    usb_c4_current = pb_field(pb.usb_typec4_display_info.usb_amp, pround(2))
+    usb_c4_power = pb_field(pb.usb_typec4_display_info.usb_pow, _magnitude)
+    usb_c4_voltage = pb_field(pb.usb_typec4_display_info.usb_vol, _magnitude)
+    usb_c4_current = pb_field(pb.usb_typec4_display_info.usb_amp, _magnitude)
 
-    usb_a1_power = pb_field(pb.usb_typeA1_display_info.usb_pow, pround(2))
-    usb_a1_voltage = pb_field(pb.usb_typeA1_display_info.usb_vol, pround(2))
-    usb_a1_current = pb_field(pb.usb_typeA1_display_info.usb_amp, pround(2))
+    usb_a1_power = pb_field(pb.usb_typeA1_display_info.usb_pow, _magnitude)
+    usb_a1_voltage = pb_field(pb.usb_typeA1_display_info.usb_vol, _magnitude)
+    usb_a1_current = pb_field(pb.usb_typeA1_display_info.usb_amp, _magnitude)
 
-    pogo_power = pb_field(pb.pogopin_1_display_info.usb_pow, pround(2))
-    pogo_voltage = pb_field(pb.pogopin_1_display_info.usb_vol, pround(2))
-    pogo_current = pb_field(pb.pogopin_1_display_info.usb_amp, pround(2))
+    pogo_power = pb_field(pb.pogopin_1_display_info.usb_pow, _magnitude)
+    pogo_voltage = pb_field(pb.pogopin_1_display_info.usb_vol, _magnitude)
+    pogo_current = pb_field(pb.pogopin_1_display_info.usb_amp, _magnitude)
 
     async def _set_port_enabled(self, field: str, enabled: bool) -> None:
         config = dev_apl_comm_pb2.ConfigWrite()

@@ -75,10 +75,41 @@ async def test_rapid_pro_320_decodes_all_six_ports(device, display_packet):
         assert isinstance(getattr(device, f"{name}_power"), float)
         assert isinstance(getattr(device, f"{name}_voltage"), float)
         assert isinstance(getattr(device, f"{name}_current"), float)
+        assert getattr(device, f"{name}_power") >= 0
+        assert getattr(device, f"{name}_voltage") >= 0
+        assert getattr(device, f"{name}_current") >= 0
         assert getattr(device, f"{name}_port_enabled") is True
 
-    assert device.usb_c4_voltage == -5.2
-    assert device.usb_a1_voltage == -5.2
+    assert device.usb_c4_voltage == 5.2
+    assert device.usb_a1_voltage == 5.2
+
+
+async def test_rapid_pro_320_normalizes_directional_output_signs(device):
+    upload = dev_apl_comm_pb2.DisplayPropertyUpload(
+        pow_in_sum_w=52.4,
+        pow_out_sum_w=-52.4,
+    )
+    upload.usb_typec1_display_info.usb_pow = -14.0
+    upload.usb_typec1_display_info.usb_vol = -20.1
+    upload.usb_typec1_display_info.usb_amp = -0.7
+
+    packet = Packet(
+        0x02,
+        0x20,
+        0xFE,
+        0x15,
+        upload.SerializeToString(),
+        0x01,
+        0x01,
+        0x13,
+    )
+    assert await device.data_parse(packet) is True
+
+    assert device.input_power == 52.4
+    assert device.output_power == 52.4
+    assert device.usb_c1_power == 14.0
+    assert device.usb_c1_voltage == 20.1
+    assert device.usb_c1_current == 0.7
 
 
 def test_rapid_pro_320_registers_all_six_port_controls(device):

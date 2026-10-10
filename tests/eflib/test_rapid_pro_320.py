@@ -28,16 +28,16 @@ def display_packet():
 @pytest.fixture
 def device(mocker: MockerFixture):
     ble_dev = mocker.Mock()
-    ble_dev.address = "B4:3A:45:9E:3B:72"
+    ble_dev.address = "AA:BB:CC:DD:EE:FF"
     adv_data = mocker.MagicMock()
-    adv_data.manufacturer_data = {0xB5B5: b"\x00P521ZA1B3J3P0079"}
-    device = Device(ble_dev, adv_data, "P521ZA1B3J3P0079")
+    adv_data.manufacturer_data = {0xB5B5: b"\x00P521XXXXXXXX0000"}
+    device = Device(ble_dev, adv_data, "P521XXXXXXXX0000")
     device._conn = mocker.AsyncMock()
     return device
 
 
 def test_rapid_pro_320_matches_serial_prefix():
-    assert Device.check(b"P521ZA1B3J3P0079")
+    assert Device.check(b"P521XXXXXXXX0000")
     assert not Device.check(b"R655TEST1234")
 
 
